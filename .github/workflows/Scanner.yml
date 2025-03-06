@@ -53,7 +53,7 @@ jobs:
             for file in ${{ env.CHANGED_FILES }}; do
               if [[ -f "$file" ]]; then
                 echo "Scanning $file..."
-                RESULT=$(trufflehog filesystem --no-verification "$file" 2>&1 || true)
+                RESULT=$(trufflehog filesystem --no-verification --disable-version-update-check "$file" 2>&1 || true)
                 echo "$RESULT"
                 SCAN_RESULTS+="$RESULT"$'\n\n'
                 
@@ -93,7 +93,7 @@ jobs:
             **Scan Details:** [View Full Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
             ${{ env.SECRET_FOUND == 'true' && '**Note:** This PR can still be merged, but secret rotation is recommended.' || '' }}
         env:
-          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}  # Use default token unless MY_GITHUB_TOKEN is required
+          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
 
       - name: Set Workflow Status
         if: always()
