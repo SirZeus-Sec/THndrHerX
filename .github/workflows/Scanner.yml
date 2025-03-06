@@ -43,30 +43,19 @@ jobs:
       - name: Run TruffleHog on PR Changed Files
         id: trufflehog_scan
         run: |
-          SCAN_RESULTS=""
-          SECRET_FOUND=false
-          
-          if [ "${{ env.CHANGED_FILES }}" = "none" ]; then
-            echo "No files to scan."
-            SCAN_RESULTS="No files changed in this PR."
-          else
-            for file in ${{ env.CHANGED_FILES }}; do
-              if [[ -f "$file" ]]; then
-                echo "Scanning $file..."
-                RESULT=$(trufflehog filesystem --no-verification "$file" 2>&1 || true)
-                echo "$RESULT"
-                SCAN_RESULTS+="$RESULT"$'\n\n'
-                
-                if echo "$RESULT" | grep -q 'Detector Type:'; then
-                  SECRET_FOUND=true
-                fi
-              else
-                echo "Skipping $file - not found."
-                SCAN_RESULTS+="File $file not found in checkout"$'\n\n'
-              fi
-            done
+         EXIT_CODE=0
+         SCAN_RESULTS=""
+         SECRET_FOUND=false
+    
+          echo "Scanning $file..."
+          RESULT=$(trufflehog filesystem --no-verification "$CHANGED_FILES" 2>&1 || true)
+          echo "$RESULT"
+          SCAN_RESULTS+="$RESULT"$'\n\n'
+    
+          if echo "$RESULT" | grep -q 'Reason:'; then
+          SECRET_FOUND=true
+          EXIT_CODE=1
           fi
-
           echo "$SCAN_RESULTS" > scan_results.txt
           echo "SECRET_FOUND=$SECRET_FOUND" >> $GITHUB_ENV
           echo "Scan completed."
