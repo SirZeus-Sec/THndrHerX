@@ -4,7 +4,7 @@ on:
   pull_request:
     branches:
       - main
-      - master  # ✅ Added support for both main and master branches
+      - master
 
 permissions:
   pull-requests: write  
@@ -23,7 +23,10 @@ jobs:
 
       - name: Install TruffleHog
         run: |
-          curl -sSfL https://raw.githubusercontent.com/trufflesecurity/trufflehog/main/scripts/install.sh | sudo sh -s -- -b /usr/local/bin
+          # Download specific version directly to avoid updater
+          curl -sSfL https://github.com/trufflesecurity/trufflehog/releases/download/v3.88.15/trufflehog_3.88.15_linux_amd64.tar.gz -o trufflehog.tar.gz
+          tar -xzf trufflehog.tar.gz -C /usr/local/bin
+          rm trufflehog.tar.gz
           trufflehog --version  # Verify installation
 
       - name: Get Changed Files in PR
@@ -31,8 +34,6 @@ jobs:
         run: |
           BASE_SHA=$(git merge-base origin/${{ github.base_ref }} HEAD)
           HEAD_SHA="${{ github.sha }}"
-          echo "BASE_SHA=$BASE_SHA"
-          echo "HEAD_SHA=$HEAD_SHA"
           CHANGED_FILES=$(git diff --name-only "$BASE_SHA" "$HEAD_SHA" | tr '\n' ' ')
           if [ -z "$CHANGED_FILES" ]; then
             echo "CHANGED_FILES=none" >> $GITHUB_ENV
@@ -93,7 +94,7 @@ jobs:
             **Scan Details:** [View Full Report](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
             ${{ env.SECRET_FOUND == 'true' && '**Note:** This PR can still be merged, but secret rotation is recommended.' || '' }}
         env:
-          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}  # Use default token unless MY_GITHUB_TOKEN is required
+          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
 
       - name: Set Workflow Status
         if: always()
